@@ -8,7 +8,12 @@ const joinCourse = async (req, res) => {
     const userId = user.id;
     const { courseId } = req.params;
     const enroleObject = { courseId, userId };
-    prisma.e;
+    const alreadyEnrolled = await prisma.enrollment.findFirst({
+      where: enroleObject,
+    });
+    if (alreadyEnrolled) {
+      throw new ApiError(400, "User has already been enrolled");
+    }
     const enrole = await prisma.enrollment.create({ data: enroleObject });
     if (!enrole) {
       throw new ApiError(401, "Something Went Wrong Try Again Later");
