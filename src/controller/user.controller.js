@@ -61,7 +61,7 @@ const registerUser = async (req, res) => {
       data: { userId: userResponse.id, verifyToken },
     });
     const response = await sendMail({
-      to: "patelaryan0914@gmail.com",
+      to: email,
       subject: "Your Verification Token",
       JSXelement: SendVerifyToken(verifyToken),
     });
