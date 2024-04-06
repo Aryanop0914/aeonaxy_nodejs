@@ -4,6 +4,7 @@ const {
   addCourse,
   updateCourseDetails,
   getCourseInfoById,
+  getAllCourse,
 } = require("../controller/course.controller");
 const router = Router();
 
@@ -14,4 +15,7 @@ router
   .put(verifyJWT, updateCourseDetails);
 
 router.route("/getCourseInfo/:courseId").get(getCourseInfoById);
+
+router.route("/getAllCourse").get(getAllCourse);
+
 module.exports = router;

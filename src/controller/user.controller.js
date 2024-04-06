@@ -9,6 +9,7 @@ const {
   uploadOnCloudinary,
   deleteFromCloudinary,
 } = require("../utils/Cloudinary");
+const { ForgotPasswordToken } = require("../Emails/ForgotPasswordToken");
 
 const options = {
   httpOnly: true,
@@ -150,7 +151,7 @@ const login = async (req, res) => {
     if (!findUser.isVerified) {
       throw new ApiError(400, "User is Not Verified verify through mail");
     }
-    const decryptPassword = bcrypt.compare(password, findUser.password);
+    const decryptPassword = await bcrypt.compare(password, findUser.password);
     if (!decryptPassword) {
       throw new ApiError(400, "Password is Incorrect");
     }
@@ -285,11 +286,79 @@ const updateDetails = async (req, res) => {
       );
   }
 };
-const sendEmail = async (req, res) => {
+
+const forgotPasswordTokenSend = async (req, res) => {
   try {
-    console.log(req.user);
-    const token = await generateToken({ userId: "deaxsnjdk3" });
-    return res.json(token);
+    const { email } = req.body;
+    const user = await prisma.user.findFirst({ where: { email } });
+    if (!user) {
+      throw new ApiError(400, "User with this email id does not exist");
+    }
+    const token = await generateToken({ userId: user.id });
+    await prisma.authToken.update({
+      where: { userId: user.id },
+      data: { forgetPasswordToken: { set: token } },
+    });
+    const response = await sendMail({
+      to: email,
+      subject: "Your Password Reset Token",
+      JSXelement: ForgotPasswordToken(token),
+    });
+    if (!response) {
+      throw new ApiError(
+        500,
+        "Something Went Wrong While Sending Password Reset Token"
+      );
+    }
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, null, "Email Successfully send to change Password")
+      );
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Internal Server Error"
+        )
+      );
+  }
+};
+
+const updatePassword = async (req, res) => {
+  try {
+    const { verifyToken } = req.params;
+    const { newPassword } = req.body;
+    const decryptToken = await vToken(verifyToken);
+    const userObj = await prisma.authToken.findFirst({
+      where: { userId: decryptToken.userId, forgetPasswordToken: verifyToken },
+    });
+    if (!userObj) {
+      throw new ApiError(400, "Invalid Token Or Token Expired");
+    }
+    const newHasedPassword = await bcrypt.hash(newPassword, 10);
+    const updated = await prisma.user.update({
+      where: { id: userObj.userId },
+      data: { password: { set: newHasedPassword } },
+    });
+    await prisma.authToken.update({
+      where: {
+        id: userObj.id,
+      },
+      data: {
+        forgetPasswordToken: { set: null },
+      },
+    });
+    if (!updated) {
+      throw new ApiError(500, "Something went wrong while updating password");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Password Updated Successfully"));
   } catch (error) {
     console.log(error);
     return res
@@ -305,10 +374,11 @@ const sendEmail = async (req, res) => {
 };
 module.exports = {
   registerUser,
-  sendEmail,
   verifyTokenAndUpdate,
   login,
   logout,
   deleteUser,
   updateDetails,
+  forgotPasswordTokenSend,
+  updatePassword,
 };

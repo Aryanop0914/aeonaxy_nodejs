@@ -12,8 +12,10 @@ app.use(cookieParser());
 const userRoutes = require("./routes/user.routes");
 const healthCheck = require("./routes/healthCheck.routes");
 const courseRoute = require("./routes/course.routes");
+const enrollementRoute = require("./routes/enrollment.routes");
 app.use("/api/user", userRoutes);
 app.use("/api/course", courseRoute);
+app.use("/api/enrollment", enrollementRoute);
 app.use("/api", healthCheck);
 
 module.exports = { app };

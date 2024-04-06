@@ -91,6 +91,12 @@ const getCourseInfoById = async (req, res) => {
         owner: true,
       },
     });
+    const countTotalUser = await prisma.enrollment.findMany({
+      where: { courseId },
+      include: { user: true },
+    });
+    courseInfo.totalCount = countTotalUser.length;
+    courseInfo.allUsers = countTotalUser;
     if (!courseInfo) {
       throw new ApiError(400, "There Is no Course Related to this Id");
     }
@@ -110,4 +116,44 @@ const getCourseInfoById = async (req, res) => {
       );
   }
 };
-module.exports = { addCourse, updateCourseDetails, getCourseInfoById };
+
+const getAllCourse = async (req, res) => {
+  try {
+    const { title, category, level, page, limit } = req.query;
+    if (page < 0) {
+      throw new ApiError(400, "Page number should be greater than 0");
+    }
+    const query = {};
+    if (title && title !== undefined) query.title = title;
+    if (category && category !== "All") query.category = category;
+    if (level && level !== "All") query.level = level;
+    const courses = await prisma.courses.findMany({
+      skip: (page - 1) * limit,
+      take: limit * 1,
+      where: query,
+    });
+    if (!courses) {
+      throw new ApiError(500, "Something Went Wrong While While filtering");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, courses, "Courses Fetched Successfully"));
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Internal Server Error"
+        )
+      );
+  }
+};
+module.exports = {
+  addCourse,
+  updateCourseDetails,
+  getCourseInfoById,
+  getAllCourse,
+};

@@ -8,6 +8,8 @@ const {
   logout,
   deleteUser,
   updateDetails,
+  forgotPasswordTokenSend,
+  updatePassword,
 } = require("../controller/user.controller");
 const { verifyJWT } = require("../middleware/Auth.middleware");
 const router = Router();
@@ -15,8 +17,6 @@ const router = Router();
 router
   .route("/register")
   .post(upload.fields([{ name: "avatar", maxCount: 1 }]), registerUser);
-
-router.route("/sendmail").get(verifyJWT, sendEmail);
 
 router.route("/verifyToken/:clientToken").get(verifyTokenAndUpdate);
 
@@ -33,5 +33,9 @@ router
   );
 
 router.route("/deleteUser").delete(verifyJWT, deleteUser);
+
+router.route("/forgotPassword").post(forgotPasswordTokenSend);
+
+router.route("/forgotPasswordTokenVerify/:verifyToken").post(updatePassword);
 
 module.exports = router;
