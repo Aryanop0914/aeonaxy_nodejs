@@ -21,7 +21,11 @@ const uploadOnCloudinary = async (localpath) => {
     return imageObj;
   } catch (error) {
     fs.unlinkSync(localpath);
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return error;
   }
 };
@@ -31,7 +35,11 @@ const deleteFromCloudinary = async (public_id) => {
     const result = await cloudinary.uploader.destroy(public_id);
     return result;
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return error;
   }
 };

@@ -5,6 +5,7 @@ const { SendVerifyToken } = require("../Emails/SendVerifyToken");
 const { ApiError } = require("../utils/ApiError");
 const { ApiResponse } = require("../utils/ApiResponse");
 const { generateToken, vToken } = require("../utils/handleToken");
+const logger = require("../logger/index");
 const {
   uploadOnCloudinary,
   deleteFromCloudinary,
@@ -80,7 +81,11 @@ const registerUser = async (req, res) => {
         )
       );
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -125,7 +130,11 @@ const verifyTokenAndUpdate = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, null, "User Verified successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -168,7 +177,11 @@ const login = async (req, res) => {
       .cookie("accessToken", accessToken, options)
       .json(new ApiResponse(200, findUser, "User LoggedIn successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -197,7 +210,11 @@ const logout = async (req, res) => {
       .clearCookie("accessToken", options)
       .json(new ApiResponse(200, null, "User LoggedOut SuccessFully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -228,7 +245,11 @@ const deleteUser = async (req, res) => {
       .clearCookie("accessToken", options)
       .json(new ApiResponse(200, null, "User Deleted SuccessFully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -274,7 +295,11 @@ const updateDetails = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, updatedUser, "User updated Successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -316,7 +341,11 @@ const forgotPasswordTokenSend = async (req, res) => {
         new ApiResponse(200, null, "Email Successfully send to change Password")
       );
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -360,7 +389,11 @@ const updatePassword = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, null, "Password Updated Successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(

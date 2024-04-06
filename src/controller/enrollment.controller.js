@@ -24,7 +24,11 @@ const joinCourse = async (req, res) => {
         new ApiResponse(200, null, "User Enrolled The Course Successfully")
       );
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -57,7 +61,11 @@ const totalCourseUserEnrolled = async (req, res) => {
         )
       );
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(

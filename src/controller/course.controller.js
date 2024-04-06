@@ -22,7 +22,11 @@ const addCourse = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, createCourse, "Course Created Successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -69,7 +73,11 @@ const updateCourseDetails = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, updatedCourse, "Course Updated Successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -104,7 +112,11 @@ const getCourseInfoById = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, courseInfo, "Course Info Fetch successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
@@ -139,7 +151,11 @@ const getAllCourse = async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, courses, "Courses Fetched Successfully"));
   } catch (error) {
-    console.log(error);
+    logger.log({
+      level: "error",
+      message: error.error_message,
+      status_Code: error.statusCode || 500,
+    });
     return res
       .status(error.statusCode || 500)
       .json(
