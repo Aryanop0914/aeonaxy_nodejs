@@ -43,7 +43,6 @@ const updateCourseDetails = async (req, res) => {
     const findOwner = await prisma.courses.findFirst({
       where: { id: courseId },
     });
-    console.log(findOwner);
     if (ownerId !== findOwner.ownerId) {
       throw new ApiError(400, "You are Not the owner");
     }
@@ -82,4 +81,33 @@ const updateCourseDetails = async (req, res) => {
       );
   }
 };
-module.exports = { addCourse, updateCourseDetails };
+
+const getCourseInfoById = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const courseInfo = await prisma.courses.findFirst({
+      where: { id: courseId },
+      include: {
+        owner: true,
+      },
+    });
+    if (!courseInfo) {
+      throw new ApiError(400, "There Is no Course Related to this Id");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, courseInfo, "Course Info Fetch successfully"));
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Internal Server Error"
+        )
+      );
+  }
+};
+module.exports = { addCourse, updateCourseDetails, getCourseInfoById };
