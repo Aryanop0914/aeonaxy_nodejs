@@ -3,7 +3,7 @@ const { ApiResponse } = require("../utils/ApiResponse");
 const { vToken } = require("../utils/handleToken");
 const prisma = require("../utils/prisma");
 
-const verifyJWT = async (req, _, next) => {
+const verifyJWT = async (req, res, next) => {
   try {
     const token =
       req.header("Authorization")?.replace("Bearer ", "") ||
@@ -19,7 +19,15 @@ const verifyJWT = async (req, _, next) => {
     req.user = userObj;
     next();
   } catch (error) {
-    throw new ApiError(500, error?.message || "Invalid access Token");
+    return res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Token Expired"
+        )
+      );
   }
 };
 

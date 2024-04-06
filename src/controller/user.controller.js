@@ -81,7 +81,7 @@ const registerUser = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || 500)
       .json(
         new ApiResponse(
           error.statusCode || 500,
@@ -112,9 +112,12 @@ const verifyTokenAndUpdate = async (req, res) => {
         },
       },
     });
-    await prisma.authToken.delete({
+    await prisma.authToken.update({
       where: {
         id: userObj.id,
+      },
+      data: {
+        verifyToken: { set: null },
       },
     });
     return res
@@ -123,7 +126,7 @@ const verifyTokenAndUpdate = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || 500)
       .json(
         new ApiResponse(
           error.statusCode || 500,
@@ -155,8 +158,9 @@ const login = async (req, res) => {
     if (!accessToken) {
       throw new ApiError(500, "Something Went Wrong Try Again");
     }
-    await prisma.authToken.create({
-      data: { userId: findUser.id, accessToken },
+    await prisma.authToken.update({
+      where: { userId: findUser.id },
+      data: { accessToken: { set: accessToken } },
     });
     return res
       .status(200)
@@ -165,7 +169,7 @@ const login = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || 500)
       .json(
         new ApiResponse(
           error.statusCode || 500,
@@ -180,8 +184,11 @@ const logout = async (req, res) => {
   try {
     const user = req.user;
     const userId = user.id;
-    const deleted = await prisma.authToken.delete({ where: { userId } });
-    if (!deleted) {
+    const updated = await prisma.authToken.update({
+      where: { userId },
+      data: { accessToken: { set: null } },
+    });
+    if (!updated) {
       throw new ApiError(500, "Something Went Wrong Try Again");
     }
     return res
@@ -191,7 +198,7 @@ const logout = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || 500)
       .json(
         new ApiResponse(
           error.statusCode || 500,
@@ -222,7 +229,53 @@ const deleteUser = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Internal Server Error"
+        )
+      );
+  }
+};
+
+const updateDetails = async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    let avatarLocalPath;
+    const user = req.user;
+    const userId = user.id;
+    const userObject = {};
+    if (username !== undefined) userObject.username = username;
+    if (email !== undefined) userObject.email = email;
+    if (req.files.avatar !== undefined) {
+      avatarLocalPath = req.files?.avatar[0]?.path;
+      const avatarDelete = await deleteFromCloudinary(user.avatar_public_id);
+      if (!avatarDelete) {
+        throw new ApiError(500, "File not deleted From cloudinary");
+      }
+      const uploadNew = await uploadOnCloudinary(avatarLocalPath);
+      userObject.avatar_url = uploadNew.url;
+      userObject.avatar_public_id = uploadNew.public_id;
+    }
+    if (Object.keys(userObject).length === 0) {
+      throw new ApiError(400, "No fields to update provided");
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: userObject,
+    });
+    if (!updatedUser) {
+      throw new ApiError(400, "Something Went wrong while Updating user");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updatedUser, "User updated Successfully"));
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(error.statusCode || 500)
       .json(
         new ApiResponse(
           error.statusCode || 500,
@@ -233,8 +286,22 @@ const deleteUser = async (req, res) => {
   }
 };
 const sendEmail = async (req, res) => {
-  const token = await generateToken("deaxsnjdk3");
-  return res.json(token);
+  try {
+    console.log(req.user);
+    const token = await generateToken({ userId: "deaxsnjdk3" });
+    return res.json(token);
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(error.statusCode || 500)
+      .json(
+        new ApiResponse(
+          error.statusCode || 500,
+          null,
+          error.error_message || "Internal Server Error"
+        )
+      );
+  }
 };
 module.exports = {
   registerUser,
@@ -243,4 +310,5 @@ module.exports = {
   login,
   logout,
   deleteUser,
+  updateDetails,
 };
